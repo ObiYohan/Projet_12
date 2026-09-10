@@ -1,0 +1,1 @@
+Les commentaires dans le code ainsi que les noms de variables doivent être en anglais.

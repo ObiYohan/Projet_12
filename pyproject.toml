@@ -1,0 +1,27 @@
+[project]
+name = "projet-12"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Johan", email = "obiyohan@free.fr" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "beautifulsoup4>=4.12",
+    "ipykernel>=6.29",
+    "ipywidgets>=8.1.9",
+    "jupyter>=1.1.1",
+    "load-dotenv>=0.1.0",
+    "pandas>=2.2",
+    "python-dotenv>=1.0",
+    "requests>=2.32",
+    "tqdm>=4.66",
+]
+
+[project.scripts]
+projet-12 = "projet_12:main"
+
+[build-system]
+requires = ["uv_build>=0.12.6,<0.13.0"]
+build-backend = "uv_build"
