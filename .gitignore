@@ -16,3 +16,6 @@ wheels/
 data/google_factcheck/images/
 
 data/
+
+# Pipeline run logs
+logs/

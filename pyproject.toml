@@ -19,8 +19,14 @@ dependencies = [
     "tqdm>=4.66",
 ]
 
+[project.optional-dependencies]
+airflow = ["apache-airflow==3.3.1"]
+
 [project.scripts]
 projet-12 = "projet_12:main"
+projet-12-transform = "projet_12.pipeline.run:main"
+projet-12-init-db = "projet_12.pipeline.init_db:main"
+projet-12-load = "projet_12.pipeline.load:main"
 
 [build-system]
 requires = ["uv_build>=0.12.6,<0.13.0"]
