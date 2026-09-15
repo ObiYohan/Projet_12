@@ -1,15 +1,15 @@
 """Transformation pipeline: read -> adapt -> clean -> enrich -> validate -> export.
 
 Usage (CLI):
-    python -m projet_12.pipeline.run --source google_factcheck \\
+    python -m pipeline.run --source google_factcheck \\
         --input data/google_factcheck/google_factcheck_multimodal.csv \\
         --output data/processed/google_factcheck.csv
 
 Usage (library):
-    from projet_12.pipeline import run_pipeline
+    from pipeline import run_pipeline
     run_pipeline("google_factcheck", input_path, output_path, log_dir)
 
-Adding a new source means writing one adapter (see projet_12.pipeline.adapters)
+Adding a new source means writing one adapter (see pipeline.adapters)
 and registering it in ADAPTERS - this module and the cleaning/schema/export
 steps stay the same regardless of the source's raw shape.
 """

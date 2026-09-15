@@ -1,6 +1,6 @@
 # Schéma conceptuel — dataset transformé
 
-Modèle de données produit par `src/projet_12/pipeline` à partir de n'importe
+Modèle de données produit par `src/pipeline` à partir de n'importe
 quelle extraction (Google Fact Check, FakeNewsNet, et toute source future
 disposant d'un adaptateur). Chaque ligne du dataset final correspond à une
 `CLAIM_RECORD`, rattachée à une `SOURCE` (l'extraction d'origine) et,

@@ -2,7 +2,7 @@
 
 Maps the raw claims:search output columns to the canonical intermediate
 names. Label normalization is intentionally left to the common cleaning
-step (projet_12.pipeline.cleaning.map_textual_rating_to_label), even though
+step (pipeline.cleaning.map_textual_rating_to_label), even though
 the extraction notebook also computes one for quick exploration: the
 pipeline is the single source of truth for that mapping.
 """

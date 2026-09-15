@@ -2,7 +2,7 @@
 
 Modularity: a new source needs (1) an extractor registered in
 `extraction.EXTRACTORS` and (2) an adapter registered in
-`projet_12.pipeline.adapters.ADAPTERS`, both keyed by the same source name.
+`pipeline.adapters.ADAPTERS`, both keyed by the same source name.
 This DAG builds an extract -> transform -> load task chain for every source
 name present in *both* registries - no changes needed here to add a source.
 
@@ -10,7 +10,7 @@ Environment notes:
 - Airflow 3.3.1+ supports Python 3.14 (this project's `requires-python`), so
   Airflow can be installed in the same `uv` project via the `airflow` extra:
   `uv sync --extra airflow`.
-- The sys.path tweak below makes `projet_12`/`extraction` importable without
+- The sys.path tweak below makes `pipeline`/`extraction` importable without
   a separate `pip install -e .` step, which matters if Airflow's worker
   processes don't otherwise see this project as an installed package.
 - GOOGLE_FACTCHECK_API_KEY must be set wherever the extraction task runs -
@@ -35,9 +35,9 @@ import pandas as pd
 from airflow.sdk import dag, task
 
 from extraction import EXTRACTORS
-from projet_12.pipeline.adapters import ADAPTERS
-from projet_12.pipeline.run import run_pipeline
-from projet_12.pipeline.store import DEFAULT_DB_PATH, load_dataframe
+from pipeline.adapters import ADAPTERS
+from pipeline.run import run_pipeline
+from pipeline.store import DEFAULT_DB_PATH, load_dataframe
 
 RAW_DIR = REPO_ROOT / "data" / "raw"
 PROCESSED_DIR = REPO_ROOT / "data" / "processed"

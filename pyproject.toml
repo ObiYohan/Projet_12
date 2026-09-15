@@ -23,10 +23,12 @@ dependencies = [
 airflow = ["apache-airflow==3.3.1"]
 
 [project.scripts]
-projet-12 = "projet_12:main"
-projet-12-transform = "projet_12.pipeline.run:main"
-projet-12-init-db = "projet_12.pipeline.init_db:main"
-projet-12-load = "projet_12.pipeline.load:main"
+projet-12-transform = "pipeline.run:main"
+projet-12-init-db = "pipeline.init_db:main"
+projet-12-load = "pipeline.load:main"
+
+[tool.uv.build-backend]
+module-name = ["extraction", "pipeline"]
 
 [build-system]
 requires = ["uv_build>=0.12.6,<0.13.0"]
