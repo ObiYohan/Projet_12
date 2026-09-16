@@ -92,7 +92,10 @@ def factcheck_etl():
         @task(task_id=f"load_{source}")
         def load_task(processed_path_str: str) -> dict:
             """Chargement: upsert the transformed dataset into the SQLite database."""
-            df = pd.read_csv(processed_path_str)
+            # dtype=str for label: a column that's entirely "true" (single-label sources
+            # like fakenewsnet's per-file CSVs) gets auto-inferred as boolean otherwise,
+            # corrupting it - see pipeline.store's CHECK constraint on label.
+            df = pd.read_csv(processed_path_str, dtype={"label": str})
             for column in ("claim_date", "published_at", "ingested_at"):
                 if column in df.columns:
                     df[column] = pd.to_datetime(df[column], errors="coerce", utc=True)

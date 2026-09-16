@@ -22,7 +22,9 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     configure_logging(args.log_dir)
-    df = pd.read_csv(args.input)
+    # dtype=str for label: a column that's entirely "true" gets auto-inferred as boolean
+    # otherwise (pandas treats "true"/"false" as boolean literals), corrupting it.
+    df = pd.read_csv(args.input, dtype={"label": str})
     for column in ("claim_date", "published_at", "ingested_at"):
         if column in df.columns:
             df[column] = pd.to_datetime(df[column], errors="coerce", utc=True)

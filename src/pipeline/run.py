@@ -33,7 +33,9 @@ logger = logging.getLogger(__name__)
 def read_raw(input_path: Path) -> pd.DataFrame:
     """Lecture: load the raw extraction CSV."""
     logger.info("Reading raw extraction from %s", input_path)
-    df = pd.read_csv(input_path)
+    # dtype=str for label: a column that's entirely "true" (single-label sources like
+    # fakenewsnet's per-file CSVs) gets auto-inferred as boolean otherwise, corrupting it.
+    df = pd.read_csv(input_path, dtype={"label": str})
     logger.info("Read %d raw row(s), %d column(s)", len(df), df.shape[1])
     return df
 

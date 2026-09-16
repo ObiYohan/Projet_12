@@ -1,8 +1,7 @@
-"""Adapter for FakeNewsNet extractions (data/FakeNewsNet/*.csv).
+"""Adapter for FakeNewsNet extractions (data/FakeNewsNet/*.csv, via extraction.fakenewsnet).
 
-Included mainly to demonstrate that a second, structurally different source
-(one file per label, no article body or rating text) plugs into the same
-pipeline: only this module changes, cleaning/schema/export are untouched.
+Only this module changes to support this source: cleaning, schema, and
+export are shared with every other source.
 """
 
 from __future__ import annotations
@@ -11,10 +10,12 @@ import pandas as pd
 
 
 def adapt(df_raw: pd.DataFrame, *, label: str) -> pd.DataFrame:
-    """Map a raw FakeNewsNet CSV (id, news_url, title, tweet_ids) to the canonical schema.
+    """Map a raw FakeNewsNet extraction (id, news_url, title, tweet_ids, [article_text]) to the canonical schema.
 
     FakeNewsNet ships one file per label (e.g. gossipcop_fake.csv / gossipcop_real.csv):
     the label isn't a column, so the caller passes it in based on which file was read.
+    article_text is optional: present when the row came from extraction.fakenewsnet
+    (which fetches the article body), absent for a bare original FakeNewsNet CSV.
     """
     if label not in ("fake", "true"):
         raise ValueError(f"fakenewsnet adapter: label must be 'fake' or 'true', got {label!r}")
@@ -27,7 +28,7 @@ def adapt(df_raw: pd.DataFrame, *, label: str) -> pd.DataFrame:
         {
             "claim_text": df_raw["title"],
             "article_title": df_raw["title"],
-            "article_text": None,
+            "article_text": df_raw["article_text"] if "article_text" in df_raw.columns else None,
             "article_url": df_raw["news_url"],
             "claimant": None,
             "claim_date": None,

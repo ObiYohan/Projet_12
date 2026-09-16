@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(git mv *)",
-      "Bash(uv sync *)"
+      "Bash(uv sync *)",
+      "Bash(uv run python -c ' *)"
     ]
   }
 }
