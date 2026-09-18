@@ -85,6 +85,22 @@ def map_textual_rating_to_label(rating) -> str | None:
     return None
 
 
+ISO8601_UTC_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
+
+def normalize_datetime(series: pd.Series) -> pd.Series:
+    """Parse a date-like column and format it as a consistent ISO 8601 UTC string.
+
+    Every source uses a different raw date shape (AFP's RSS pubDate, Google's
+    already-ISO8601 dates, ISOT's mixed "December 31, 2017" / "19-Feb-18") -
+    this gives every source's output the same YYYY-MM-DDTHH:MM:SSZ shape, so
+    dates are comparable/sortable as plain strings regardless of origin.
+    Unparsable values become NaN (not the literal string "NaT").
+    """
+    parsed = pd.to_datetime(series, errors="coerce", utc=True, format="mixed")
+    return parsed.dt.strftime(ISO8601_UTC_FORMAT)
+
+
 def make_record_id(source: str, url: str | None, fallback: str) -> str:
     """Deterministic short id from the source name and article URL (or a fallback if no URL)."""
     basis = f"{source}:{url or fallback}"

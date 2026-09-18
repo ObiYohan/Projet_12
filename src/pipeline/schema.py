@@ -34,7 +34,7 @@ CANONICAL_SCHEMA: list[FieldSpec] = [
     FieldSpec("source", "string", "provenance", True, "Name of the extraction/adapter this row came from"),
     FieldSpec("claim_text", "string", "nlp_text", True, "The claim being fact-checked"),
     FieldSpec("claimant", "string", "metadata", False, "Who or what made the claim"),
-    FieldSpec("claim_date", "datetime64[ns, UTC]", "metadata", False, "Date the claim was made"),
+    FieldSpec("claim_date", "string (ISO 8601 UTC)", "metadata", False, "Date the claim was made"),
     FieldSpec("article_title", "string", "nlp_text", False, "Title of the review/source article"),
     FieldSpec("article_text", "string", "nlp_text", False, "Full body text of the review/source article"),
     FieldSpec("article_text_length", "Int64", "metadata", False, "Character length of article_text (0 if missing)"),
@@ -43,11 +43,11 @@ CANONICAL_SCHEMA: list[FieldSpec] = [
     FieldSpec("has_valid_image", "boolean", "multimodal_image", False, "Whether image_url is a syntactically valid image URL"),
     FieldSpec("publisher_name", "string", "metadata", False, "Name of the fact-checking/publishing organization"),
     FieldSpec("publisher_site", "string", "metadata", False, "Domain of the publisher"),
-    FieldSpec("published_at", "datetime64[ns, UTC]", "metadata", False, "Date the review/article was published"),
+    FieldSpec("published_at", "string (ISO 8601 UTC)", "metadata", False, "Date the review/article was published"),
     FieldSpec("textual_rating_raw", "string", "provenance", False, "Original free-text rating before normalization"),
     FieldSpec("label", "string", "classification_target", True, "Normalized binary label: 'fake' or 'true'"),
     FieldSpec("language_code", "string", "metadata", False, "BCP-47 language code of the article/review"),
-    FieldSpec("ingested_at", "datetime64[ns, UTC]", "provenance", True, "Timestamp this row was processed by the pipeline"),
+    FieldSpec("ingested_at", "string (ISO 8601 UTC)", "provenance", True, "Timestamp this row was processed by the pipeline"),
 ]
 
 COLUMN_ORDER: list[str] = [field.name for field in CANONICAL_SCHEMA]

@@ -8,10 +8,11 @@ pipeline needs to change.
 
 from functools import partial
 
-from . import fakenewsnet, google_factcheck
+from . import bluesky_afp, fakenewsnet, google_factcheck, isot
 
 ADAPTERS = {
     "google_factcheck": google_factcheck.adapt,
+    "bluesky_afp": bluesky_afp.adapt,
     "fakenewsnet": fakenewsnet.adapt,
     # One entry per (file, label) pair, matching extraction.EXTRACTORS - the label is
     # bound here instead of passed at transform time, so the DAG needs no per-source
@@ -20,6 +21,9 @@ ADAPTERS = {
     "fakenewsnet_gossipcop_true": partial(fakenewsnet.adapt, label="true"),
     "fakenewsnet_politifact_fake": partial(fakenewsnet.adapt, label="fake"),
     "fakenewsnet_politifact_true": partial(fakenewsnet.adapt, label="true"),
+    # isot.adapt reads the label from the raw dataframe's own "label" column
+    # (set by the merged extraction), not a kwarg - so no partial binding needed.
+    "isot": isot.adapt,
 }
 
 __all__ = ["ADAPTERS"]

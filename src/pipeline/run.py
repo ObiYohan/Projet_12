@@ -26,6 +26,7 @@ from . import cleaning, schema
 from .adapters import ADAPTERS
 from .export import export_dataset
 from .logging_config import configure_logging
+from .metrics import RunMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +51,13 @@ def adapt_source(df_raw: pd.DataFrame, source: str, **adapter_kwargs) -> pd.Data
     return df
 
 
-def clean(df: pd.DataFrame) -> pd.DataFrame:
-    """Traitement: text cleanup, URL/date normalization, label mapping, de-duplication."""
+def clean(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
+    """Traitement: text cleanup, URL/date normalization, label mapping, de-duplication.
+
+    Returns (df, drop_counts) - drop_counts breaks down *why* rows were removed,
+    for the precision KPI (pipeline.metrics).
+    """
+    drop_counts: dict[str, int] = {}
     text_columns = ["claim_text", "article_title", "article_text", "claimant", "publisher_name"]
     for column in text_columns:
         if column in df.columns:
@@ -68,7 +74,10 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
 
     for column in ("claim_date", "published_at"):
         if column in df.columns:
-            df[column] = pd.to_datetime(df[column], errors="coerce", utc=True)
+            # Every source has a different raw date shape - normalize_datetime gives
+            # them all the same ISO 8601 UTC string, so dates are comparable/sortable
+            # as plain text regardless of source.
+            df[column] = cleaning.normalize_datetime(df[column])
 
     if "label" not in df.columns:
         df["label"] = df["textual_rating_raw"].apply(cleaning.map_textual_rating_to_label)
@@ -76,18 +85,28 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
 
     before = len(df)
     df = df[df["claim_text"].notna()].reset_index(drop=True)
-    logger.info("Dropped %d row(s) with no usable claim_text", before - len(df))
+    drop_counts["rows_dropped_missing_text"] = before - len(df)
+    logger.info("Dropped %d row(s) with no usable claim_text", drop_counts["rows_dropped_missing_text"])
 
     before = len(df)
-    subset = ["article_url"] if "article_url" in df.columns else None
-    df = df.drop_duplicates(subset=subset, keep="first").reset_index(drop=True)
-    logger.info("Dropped %d duplicate row(s)", before - len(df))
+    # Dedup by article_url when it's actually populated; sources without one (e.g. ISOT,
+    # which has no URLs at all) would otherwise see every row treated as a duplicate of
+    # every other, since they'd all share the same null value. Fall back to claim_text
+    # for any row missing a URL.
+    if "article_url" in df.columns and df["article_url"].notna().any():
+        dedup_key = df["article_url"].fillna(df["claim_text"])
+    else:
+        dedup_key = df["claim_text"]
+    df = df[~dedup_key.duplicated(keep="first")].reset_index(drop=True)
+    drop_counts["rows_dropped_duplicate"] = before - len(df)
+    logger.info("Dropped %d duplicate row(s)", drop_counts["rows_dropped_duplicate"])
 
     before = len(df)
     df = df[df["label"].notna()].reset_index(drop=True)
-    logger.info("Dropped %d row(s) with an unrecognized/ambiguous rating", before - len(df))
+    drop_counts["rows_dropped_label"] = before - len(df)
+    logger.info("Dropped %d row(s) with an unrecognized/ambiguous rating", drop_counts["rows_dropped_label"])
 
-    return df
+    return df, drop_counts
 
 
 def enrich(df: pd.DataFrame) -> pd.DataFrame:
@@ -99,7 +118,7 @@ def enrich(df: pd.DataFrame) -> pd.DataFrame:
     df["article_text_length"] = (
         df["article_text"].fillna("").str.len() if "article_text" in df.columns else 0
     )
-    df["ingested_at"] = pd.Timestamp.now("UTC")
+    df["ingested_at"] = pd.Timestamp.now("UTC").strftime(cleaning.ISO8601_UTC_FORMAT)
     logger.info("Generated derived columns: record_id, article_text_length, ingested_at")
     return df
 
@@ -109,17 +128,39 @@ def run_pipeline(
     input_path: Path,
     output_path: Path,
     log_dir: Path = Path("logs"),
+    record_metrics: bool = True,
     **adapter_kwargs,
-) -> Path:
-    """Run the full read -> adapt -> clean -> enrich -> validate -> export pipeline. Returns output_path."""
+) -> tuple[Path, dict]:
+    """Run the full read -> adapt -> clean -> enrich -> validate -> export pipeline.
+
+    Returns (output_path, metrics_snapshot). metrics_snapshot covers only this
+    transformation phase (not extraction/chargement, which run as separate Airflow
+    tasks - see dags/_common.py, which merges all three).
+
+    record_metrics=True (default, for standalone CLI/notebook use) also appends this
+    phase as a complete, self-contained run record to data/metrics/etl_runs.jsonl.
+    Pass record_metrics=False when a caller (e.g. the DAG) will merge this phase's
+    snapshot with extraction/chargement's own before writing a single combined record.
+    """
     log_path = configure_logging(log_dir)
     logger.info("=== Starting transformation pipeline (source=%s) ===", source)
     logger.info("Run log: %s", log_path)
 
-    df_raw = read_raw(input_path)
-    df = adapt_source(df_raw, source, **adapter_kwargs)
-    df = clean(df)
-    df = enrich(df)
+    metrics = RunMetrics(source)
+
+    with metrics.step("read"):
+        df_raw = read_raw(input_path)
+    metrics.set_count("rows_read", len(df_raw))
+
+    with metrics.step("adapt"):
+        df = adapt_source(df_raw, source, **adapter_kwargs)
+
+    with metrics.step("clean"):
+        df, drop_counts = clean(df)
+    metrics.counts.update(drop_counts)
+
+    with metrics.step("enrich"):
+        df = enrich(df)
 
     for column in schema.column_order():
         if column not in df.columns:
@@ -133,9 +174,16 @@ def run_pipeline(
     else:
         logger.info("Schema validation passed: all required fields present and non-null")
 
-    export_dataset(df, output_path, source=source, input_path=input_path, issues=issues)
+    with metrics.step("export"):
+        export_dataset(df, output_path, source=source, input_path=input_path, issues=issues)
+    metrics.set_count("rows_exported", len(df))
+
+    if record_metrics:
+        metrics_path = metrics.record()
+        logger.info("Run metrics: %s", metrics_path)
+
     logger.info("=== Pipeline complete: %d row(s) -> %s ===", len(df), output_path)
-    return output_path
+    return output_path, metrics.to_dict()
 
 
 def main(argv: list[str] | None = None) -> None:

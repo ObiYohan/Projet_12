@@ -23,11 +23,10 @@ def main(argv: list[str] | None = None) -> None:
 
     configure_logging(args.log_dir)
     # dtype=str for label: a column that's entirely "true" gets auto-inferred as boolean
-    # otherwise (pandas treats "true"/"false" as boolean literals), corrupting it.
+    # otherwise (pandas treats "true"/"false" as boolean literals), corrupting it. Date
+    # columns are already ISO 8601 UTC strings (pipeline.cleaning.normalize_datetime)
+    # and need no reparsing here.
     df = pd.read_csv(args.input, dtype={"label": str})
-    for column in ("claim_date", "published_at", "ingested_at"):
-        if column in df.columns:
-            df[column] = pd.to_datetime(df[column], errors="coerce", utc=True)
 
     summary = load_dataframe(df, args.db_path)
     logger.info("Load summary: %s", summary)

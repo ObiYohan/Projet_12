@@ -9,13 +9,18 @@ authors = [
 requires-python = ">=3.14"
 dependencies = [
     "beautifulsoup4>=4.12",
+    "curl-cffi>=0.7",
     "ipykernel>=6.29",
     "ipywidgets>=8.1.9",
     "jupyter>=1.1.1",
     "load-dotenv>=0.1.0",
+    "matplotlib>=3.11.2",
     "pandas>=2.2",
+    "plotly>=5.24",
+    "psutil>=6.0",
     "python-dotenv>=1.0",
     "requests>=2.32",
+    "streamlit>=1.38",
     "tqdm>=4.66",
 ]
 

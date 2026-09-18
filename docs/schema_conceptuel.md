@@ -29,18 +29,18 @@ erDiagram
         string publisher_name FK
         string claim_text
         string claimant
-        datetime claim_date
+        string claim_date "ISO 8601 UTC"
         string article_title
         string article_text
         int article_text_length
         string article_url
         string image_url
         boolean has_valid_image
-        datetime published_at
+        string published_at "ISO 8601 UTC"
         string textual_rating_raw
         string label
         string language_code
-        datetime ingested_at
+        string ingested_at "ISO 8601 UTC"
     }
 ```
 
@@ -52,7 +52,7 @@ erDiagram
 | `source` | string | Provenance | Nom de l'extraction d'origine (`google_factcheck`, `fakenewsnet`, ...) |
 | `claim_text` | string | **Texte NLP** | Affirmation vérifiée — entrée principale pour un modèle de classification |
 | `claimant` | string \| null | Métadonnée | Auteur/origine de l'affirmation |
-| `claim_date` | datetime \| null | Métadonnée temporelle | Date de l'affirmation |
+| `claim_date` | string (ISO 8601 UTC) \| null | Métadonnée temporelle | Date de l'affirmation |
 | `article_title` | string \| null | **Texte NLP** | Titre de l'article de vérification |
 | `article_text` | string \| null | **Texte NLP** | Corps complet de l'article — contexte enrichi pour le NLP |
 | `article_text_length` | int | Métadonnée dérivée | Longueur de `article_text` (0 si absent) — utile pour filtrer le bruit |
@@ -61,11 +61,11 @@ erDiagram
 | `has_valid_image` | boolean | Image multimodale (dérivé) | Vérification syntaxique de `image_url` (hors ligne, pas de requête réseau) |
 | `publisher_name` | string \| null | Métadonnée | Organisme de fact-checking |
 | `publisher_site` | string \| null | Métadonnée | Domaine du publisher |
-| `published_at` | datetime \| null | Métadonnée temporelle | Date de publication de la vérification |
+| `published_at` | string (ISO 8601 UTC) \| null | Métadonnée temporelle | Date de publication de la vérification |
 | `textual_rating_raw` | string \| null | Provenance / audit | Évaluation textuelle brute avant normalisation (traçabilité du mapping) |
 | `label` | `"fake"` \| `"true"` | **Cible de classification** | Label binaire normalisé — variable à prédire |
 | `language_code` | string \| null | Métadonnée | Code langue |
-| `ingested_at` | datetime | Provenance | Horodatage du passage dans le pipeline (reproductibilité/audit) |
+| `ingested_at` | string (ISO 8601 UTC) | Provenance | Horodatage du passage dans le pipeline (reproductibilité/audit) |
 
 ## Notes de conception
 
@@ -83,3 +83,9 @@ erDiagram
   (extension de fichier), volontairement hors ligne — une vérification réseau
   rendrait la sortie du pipeline dépendante de l'état d'internet au moment de
   l'exécution.
+- **Dates harmonisées** : chaque source a un format de date brut différent
+  (RSS `pubDate` d'AFP, ISO8601 déjà propre chez Google Fact Check, formats
+  mixtes chez ISOT). `pipeline.cleaning.normalize_datetime()` les convertit
+  toutes vers la même chaîne `AAAA-MM-JJTHH:MM:SSZ` (ISO 8601 UTC) — triable
+  et comparable en texte brut, sans ambiguïté de fuseau, quelle que soit la
+  source.
