@@ -30,7 +30,7 @@ class FieldSpec:
 
 
 CANONICAL_SCHEMA: list[FieldSpec] = [
-    FieldSpec("record_id", "string", "identifier", True, "Stable row id, hashed from source + article_url"),
+    FieldSpec("record_id", "string", "identifier", True, "Stable row id, hashed from source + article_url (or claim_text + article_text if no URL)"),
     FieldSpec("source", "string", "provenance", True, "Name of the extraction/adapter this row came from"),
     FieldSpec("claim_text", "string", "nlp_text", True, "The claim being fact-checked"),
     FieldSpec("claimant", "string", "metadata", False, "Who or what made the claim"),

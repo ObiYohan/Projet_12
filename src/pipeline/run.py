@@ -111,9 +111,15 @@ def clean(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
 
 def enrich(df: pd.DataFrame) -> pd.DataFrame:
     """Traitement: generate derived columns (record_id, article_text_length, ingested_at)."""
+    # Content fallback uses the already-cleaned text, so whitespace-only changes upstream
+    # don't change the id either.
     df["record_id"] = [
-        cleaning.make_record_id(row.source, getattr(row, "article_url", None), fallback=str(i))
-        for i, row in enumerate(df.itertuples())
+        cleaning.make_record_id(
+            row.source,
+            getattr(row, "article_url", None),
+            content=(row.claim_text, getattr(row, "article_text", None)),
+        )
+        for row in df.itertuples()
     ]
     df["article_text_length"] = (
         df["article_text"].fillna("").str.len() if "article_text" in df.columns else 0

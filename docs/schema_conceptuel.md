@@ -48,7 +48,7 @@ erDiagram
 
 | Champ | Type | Rôle | Description |
 | --- | --- | --- | --- |
-| `record_id` | string | Identifiant | Id stable, dérivé de `source` + `article_url` (hash SHA-1 tronqué) |
+| `record_id` | string | Identifiant | Id stable, dérivé de `source` + `article_url`, ou à défaut d'URL (ISOT) de `source` + `claim_text` + `article_text` (hash SHA-1 tronqué) — jamais de la position de la ligne |
 | `source` | string | Provenance | Nom de l'extraction d'origine (`google_factcheck`, `fakenewsnet`, ...) |
 | `claim_text` | string | **Texte NLP** | Affirmation vérifiée — entrée principale pour un modèle de classification |
 | `claimant` | string \| null | Métadonnée | Auteur/origine de l'affirmation |

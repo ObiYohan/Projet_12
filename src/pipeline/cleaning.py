@@ -101,7 +101,15 @@ def normalize_datetime(series: pd.Series) -> pd.Series:
     return parsed.dt.strftime(ISO8601_UTC_FORMAT)
 
 
-def make_record_id(source: str, url: str | None, fallback: str) -> str:
-    """Deterministic short id from the source name and article URL (or a fallback if no URL)."""
-    basis = f"{source}:{url or fallback}"
+def make_record_id(source: str, url: str | None, content: tuple) -> str:
+    """Deterministic short id from the source name and article URL, or the row's content if no URL.
+
+    Never derived from the row's position: for URL-less sources (ISOT) a positional
+    id shifts whenever the input order or the set of dropped rows changes, and the
+    load's INSERT OR REPLACE would then overwrite a *different* article in the database.
+    """
+    if not pd.isna(url) and url:
+        basis = f"{source}:{url}"
+    else:
+        basis = f"{source}:" + "\x1f".join("" if pd.isna(part) else str(part) for part in content)
     return hashlib.sha1(basis.encode("utf-8")).hexdigest()[:16]

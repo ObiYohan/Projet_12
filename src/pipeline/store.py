@@ -3,7 +3,8 @@
 Physical model matches docs/schema_conceptuel.md's ER diagram: a claim_record
 table referencing small source/publisher dimension tables by natural key
 (their name), so the same source/publisher is never duplicated across loads.
-record_id is a deterministic hash of (source, article_url), so reloading the
+record_id is a deterministic hash of (source, article_url) - or of the row's content
+when there is no URL (ISOT) - never of its position, so reloading the
 same extraction replaces the same rows instead of duplicating them.
 """
 
