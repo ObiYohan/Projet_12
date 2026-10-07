@@ -12,13 +12,15 @@ uv sync
 
 ## Airflow
 
+Les secrets ne sont pas versionnés : copier `.env.example` en `.env` (clé API Google) et `airflow/.env.example` en `airflow/.env`, puis renseigner chaque valeur (les commandes de génération sont dans le fichier). `docker compose` refuse de démarrer si un secret manque.
+
 ```bash
 cd airflow
 docker compose up airflow-init
 docker compose up -d
 ```
 
-Interface : http://localhost:8080 (identifiants par défaut : `airflow` / `airflow`)
+Interface : http://localhost:8080 (identifiants : `_AIRFLOW_WWW_USER_USERNAME` / `_AIRFLOW_WWW_USER_PASSWORD` définis dans `airflow/.env`)
 
 Arrêt :
 
